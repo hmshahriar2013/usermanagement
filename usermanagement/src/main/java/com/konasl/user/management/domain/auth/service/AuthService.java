@@ -17,6 +17,7 @@ import com.konasl.user.management.api.identity.dto.UserRequest;
 import com.konasl.user.management.domain.access.service.AccessControlService;
 import com.konasl.user.management.domain.identity.model.UserStatus;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,12 @@ public class AuthService {
         private final JwtService jwtService;
         private final PasswordEncoder passwordEncoder;
         private final PasswordPolicyValidator passwordPolicyValidator;
+
+        @Value("${ums.security.jwt.access-token-expiration}")
+        private long accessTokenExpiration;
+
+        @Value("${ums.security.jwt.refresh-token-expiration}")
+        private long refreshTokenExpiration;
 
         @Transactional
         @com.konasl.user.management.domain.audit.annotation.Auditable(eventType = com.konasl.user.management.domain.audit.model.AuditEventType.USER_CREATED)
@@ -106,7 +113,8 @@ public class AuthService {
                 return TokenResponse.builder()
                                 .accessToken(accessToken)
                                 .refreshToken(refreshToken)
-                                .expiresInMs(3600000) // TODO: Get from property
+                                .expiresInMs(accessTokenExpiration)
+                                .refreshExpiresInMs(refreshTokenExpiration)
                                 .tokenType("Bearer")
                                 .build();
         }
@@ -127,7 +135,8 @@ public class AuthService {
                 return TokenResponse.builder()
                                 .accessToken(accessToken)
                                 .refreshToken(refreshToken)
-                                .expiresInMs(3600000)
+                                .expiresInMs(accessTokenExpiration)
+                                .refreshExpiresInMs(refreshTokenExpiration)
                                 .tokenType("Bearer")
                                 .build();
         }
@@ -159,7 +168,8 @@ public class AuthService {
                 return TokenResponse.builder()
                                 .accessToken(newAccessToken)
                                 .refreshToken(refreshTokenValue)
-                                .expiresInMs(3600000)
+                                .expiresInMs(accessTokenExpiration)
+                                .refreshExpiresInMs(refreshTokenExpiration)
                                 .tokenType("Bearer")
                                 .build();
         }
@@ -185,7 +195,7 @@ public class AuthService {
                 RefreshToken refreshToken = RefreshToken.builder()
                                 .userId(userId)
                                 .tokenValue(tokenValue)
-                                .expiryDate(LocalDateTime.now().plusDays(7)) // TODO: Get from property
+                                .expiryDate(LocalDateTime.now().plusNanos(refreshTokenExpiration * 1_000_000))
                                 .build();
                 refreshTokenRepository.save(refreshToken);
         }

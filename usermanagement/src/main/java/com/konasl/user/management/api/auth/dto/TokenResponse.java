@@ -9,5 +9,6 @@ public class TokenResponse {
     private String accessToken;
     private String refreshToken;
     private long expiresInMs;
+    private long refreshExpiresInMs;
     private String tokenType;
 }
